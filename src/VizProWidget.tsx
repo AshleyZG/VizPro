@@ -299,7 +299,7 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                                 minY={this.model.minY}
                                 maxX={this.model.maxX}
                                 maxY={this.model.maxY}
-                                width={1200}
+                                width={1000}
                                 height={800}
                                 radius={8}
                             

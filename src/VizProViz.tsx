@@ -1,10 +1,6 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { scaleLinear, scaleSequential, scaleLog } from 'd3-scale';
-// import { DLEvent } from './scatterViewWidget';
-// import { Position } from './2dViz';
-
-// import { OverCodeCluster } from './clusterWidget';
 
 import { DLEvent, Position, OverCodeCluster } from './VizProTypes';
 import {levenshteinEditDistance} from 'levenshtein-edit-distance';
@@ -83,19 +79,20 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
         const scalerTime = scaleLog()
             .domain([1, 46272942000])
-            .range([0, 60*1000])
+            .range([0, 16*60*1000])
 
         activeUsers.forEach((name: string) => {
             events[name].forEach((event: DLEvent, index: number)=>{
-
-                setTimeout(()=>{
-                    var [x, y] = scope.calculatePos(name, event);
-                    scope.userCode[name] = event.code;
-                    // move path
-                    scope.paths[name].lineTo(x, y);
-                    
-                    scope.updateGraph(name, x, y, event.passTest, event);
-                }, scalerTime(event.timeOffset+1));
+                if (scalerTime(event.timeOffset+1) < 15*60*1000){
+                    setTimeout(()=>{
+                        var [x, y] = scope.calculatePos(name, event);
+                        scope.userCode[name] = event.code;
+                        // move path
+                        scope.paths[name].lineTo(x, y);
+                        
+                        scope.updateGraph(name, x, y, event.passTest, event);
+                    }, scalerTime(event.timeOffset+1));    
+                }
             })
         })
     }
@@ -391,6 +388,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .attr('d', function(d, i){return scope.paths[d].toString()})
             .style('stroke', 'gray')
             .style('stroke-width', '0.1')
+            .style('stroke-opacity', '0.1')
             .style('fill', 'none');
 
         // add a group of history dots for each user
