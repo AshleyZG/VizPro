@@ -13,7 +13,7 @@ import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import {
     ICommandPalette,
   } from '@jupyterlab/apputils';
-import { ICurrentUser } from '@jupyterlab/user';
+// import { ICurrentUser } from '@jupyterlab/user';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { ToolbarButton } from '@jupyterlab/apputils';
@@ -89,7 +89,7 @@ class ButtonExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel
 const pluginVizPro: JupyterFrontEndPlugin<void> = {
     id: 'VizPro:vizpro-plugin',
     autoStart: true,
-    requires: [ICurrentUser, ICommandPalette, IRenderMimeRegistry, ILayoutRestorer],
+    requires: [ICommandPalette, IRenderMimeRegistry, ILayoutRestorer],
     activate: activatePlugin
 }
   
@@ -97,7 +97,6 @@ const pluginVizPro: JupyterFrontEndPlugin<void> = {
 
 function activatePlugin(
     app: JupyterFrontEnd,
-    user: ICurrentUser,
     palette: ICommandPalette,
     rendermime: IRenderMimeRegistry,
     restorer: ILayoutRestorer    
