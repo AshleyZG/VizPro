@@ -3,6 +3,11 @@
 [![Github Actions Status](https://github.com/AshleyZG/VizPro/workflows/Build/badge.svg)](https://github.com/AshleyZG/VizPro/actions/workflows/build.yml)
 A JupyterLab extension.
 
+## BinderHub
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/AshleyZG/VizPro/HEAD)  
+.. image:: https://mybinder.org/badge_logo.svg  
+ :target: https://mybinder.org/v2/gh/AshleyZG/VizPro/HEAD  
+
 ## Requirements
 
 - JupyterLab >= 3.0
