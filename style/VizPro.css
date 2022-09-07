@@ -1,0 +1,40 @@
+.scatter-middle-view {
+    overflow-y: scroll;
+    height: 700px;
+    width: 16%;
+    display: inline-block;
+    vertical-align: top;
+}
+
+.scatter-left-view{
+    width: 66%;
+    display: inline-block;
+}
+
+.scatter-right-view {
+    overflow-y: scroll;
+    height: 700px;
+    width: 16%;
+    display: inline-block;
+    vertical-align: top;
+}
+
+circle.selected{
+    stroke: black;
+}
+
+.userbox{
+    border-radius: 5px;
+    width: fit-content;
+    display: inline-block;
+    margin: 2px;
+}
+.userbox.correct{
+    background-color: green;
+}
+.userbox.incorrect{
+    background-color: red;
+}
+.userbox:hover{
+    background-color: antiquewhite;
+}
