@@ -39,3 +39,7 @@ circle.selected{
 .userbox:hover{
     background-color: antiquewhite;
 }
+
+.error-type{
+    font-size: 150%;
+}

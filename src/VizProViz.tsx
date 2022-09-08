@@ -79,7 +79,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
         const scalerTime = scaleLog()
             .domain([1, 46272942000])
-            .range([0, 16*60*1000])
+            .range([0, 1*60*1000])
 
         activeUsers.forEach((name: string) => {
             events[name].forEach((event: DLEvent, index: number)=>{
@@ -355,15 +355,6 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
                         .attr('width', WIDTH)
                         .attr('height', HEIGHT);
 
-        // add brush to svg
-        graph.append('g')
-            .attr('class', 'brush')
-            .call(d3.brush<any>()
-            .extent([[0, 0], [WIDTH*0.8, HEIGHT]])
-            .on("start brush end", function(event){
-                scope.updateBrush(scope, event);
-            }), null
-        )
 
         // draw init dots
         var dots = graph.selectAll('.current-dot')
@@ -435,6 +426,18 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .attr('width', function(d, i){return wScale(scope.clusterProgress[d].correct.length/(scope.clusterProgress[d].correct.length+scope.clusterProgress[d].incorrect.length+0.0001))})
             .attr('height', HEIGHT/clusterIDs.length*0.5)
             .attr('fill', 'green')
+
+
+        // add brush to svg
+        graph.append('g')
+            .attr('class', 'brush')
+            .call(d3.brush<any>()
+            .extent([[0, 0], [WIDTH*0.8, HEIGHT]])
+            .on("start brush end", function(event){
+                scope.updateBrush(scope, event);
+            }), null
+        )
+
 
         d3.select('body').on('click', function(event, d){
             scope.resetGraph(event);

@@ -39,6 +39,9 @@ class VizProModel extends VDomModel {
     selectedIncorrectNames: string[] | undefined;
 
     feedback: string | undefined;
+    searchUser: string | undefined;
+
+    groupError: boolean = false;
 
     nSample: number | undefined;
     minX: number = Infinity;
@@ -213,37 +216,67 @@ class VizProModel extends VDomModel {
         function fn(events: DLEvent[]){
             scope.selectedEvents = events;
             scope.feedback = "";
+            scope.groupError = true;
             scope.stateChanged.emit();
         }
         return fn;
+    }
+
+    focusOnUser(scope: any, name: string){
+        scope.groupError = false;
+
+        // update right panel - selected solutions are user's commits
+        const graph = d3.select('.viz-canvas');
+        var currentDots = graph.selectAll('.current-dot');
+        var paths = graph.selectAll('.trajectory');
+        var historyDots = graph.selectAll('.history-dot');
+
+        currentDots.filter(function(d, i){return d!==name;})
+            .attr('visibility', 'hidden');
+        paths.filter(function(d, i){return d!==name;})
+            .attr('visibility', 'hidden');
+        historyDots.filter(function(d, i){return d!==name;})
+            .attr('visibility', 'hidden');
+
+        // focus on user
+        // only show events that have happened
+        var count = historyDots.select(function(d, i){return d===name? this: null})
+            .selectAll('circle')
+            .size()
+        
+        scope.selectedEvents = scope.events[name].filter((e: DLEvent) => {return e.type==='run';}).slice(0, count);
+        scope.feedback = "";
+
     }
 
     userOnClick(){
         const scope = this;
         function fn(event: React.MouseEvent){
             var target = event.currentTarget;
+            scope.focusOnUser(scope, target.id);
+            scope.stateChanged.emit();
 
-            // update right panel - selected solutions are user's commits
-            const graph = d3.select('.viz-canvas');
-            var currentDots = graph.selectAll('.current-dot');
-            var paths = graph.selectAll('.trajectory');
-            var historyDots = graph.selectAll('.history-dot');
+        }
+        return fn;
+    }
 
-            currentDots.filter(function(d, i){return d!==target.id;})
-                .attr('visibility', 'hidden');
-            paths.filter(function(d, i){return d!==target.id;})
-                .attr('visibility', 'hidden');
-            historyDots.filter(function(d, i){return d!==target.id;})
-                .attr('visibility', 'hidden');
 
-            // focus on user
-            // only show events that have happened
-            var count = historyDots.select(function(d, i){return d===target.id? this: null})
-                .selectAll('circle')
-                .size()
-            
-            scope.selectedEvents = scope.events[target.id].filter((e: DLEvent) => {return e.type==='run';}).slice(0, count);
-            scope.feedback = "";
+    searchUserSubmit(){
+        var scope = this;
+        function fn(event:  React.FormEvent<HTMLFormElement>){
+            // debugger;
+            scope.focusOnUser(scope, scope.searchUser!+'@umich.edu.json');
+            scope.searchUser = "";
+            event.preventDefault();
+            scope.stateChanged.emit();
+        }
+        return fn;
+    }
+
+    searchUserChange(){
+        var scope = this;
+        function fn(event: React.FormEvent<HTMLInputElement>){
+            scope.searchUser = event.currentTarget.value;
             scope.stateChanged.emit();
         }
         return fn;
@@ -269,6 +302,7 @@ class VizProModel extends VDomModel {
         }
         return fn;
     }
+
 }
 
 
@@ -278,6 +312,90 @@ class VizProWidget extends VDomRenderer<VizProModel> {
 
     constructor(model: VizProModel) {
         super(model);
+    }
+
+    renderEventList(groupError: boolean){
+        if (groupError){
+            var errorTypes: string[] = [];
+            var groups: {[error: string]: DLEvent[]} = {};
+            var correctEvents: DLEvent[] = [];
+            this.model.selectedEvents.forEach((event: DLEvent, index: number) => {
+                if (event.passTest){
+                    correctEvents.push(event);
+                }else{
+                    var error = event.output!.split(':')[0];
+                    error = error==='success'? 'Failed the test case': error;
+                    if (!errorTypes.includes(error)){
+                        errorTypes.push(error);
+                        groups[error] = [];
+                    }
+                    groups[error].push(event);
+                }
+            })
+            return <div> 
+                {errorTypes.map((error: string) => {
+                    return <div>
+                        <span className='error-type'>{error} {groups[error].length} submissions</span>
+                        {groups[error].map((e: DLEvent) => {
+                            return <div>
+                                <span>{e.output==='success'? error: e.output}</span>
+                                <SyntaxHighlighter 
+                                language='python'
+                                showLineNumbers={true}
+                                wrapLines={true}
+                                customStyle={{
+                                    backgroundColor: e.passTest? "#F0F0F0": "#FEDFE1",
+                                    opacity: e.hasFeedback? "50%": "100%",
+                                }}
+                                lineProps={(lineNumber: number): React.HTMLProps<HTMLElement> => {
+                                    const style: React.CSSProperties = {display: "block", width: "100%"};
+                                    if (e.output!.match(/\d+/g)?.includes(lineNumber.toString())){
+                                        style.backgroundColor="#F596AA";
+                                    }
+                                    return {style};
+                                }}
+                                >{e.code}</SyntaxHighlighter> 
+                            </div>
+        
+                        })}
+                    </div>
+                })}
+                {correctEvents.map((event: DLEvent) => {
+                    return <div>
+                        <SyntaxHighlighter 
+                        language='python'
+                        >{event.code}</SyntaxHighlighter> 
+                    </div>
+                })}
+            </div>
+        }else{
+            return <div>
+            {this.model.selectedEvents.map((event: DLEvent, index: number) => {
+                return <div>
+                    {event.passTest? null: <span>{event.output==='success'? 'Failed the test case': event.output}</span>}
+                    <SyntaxHighlighter 
+                    language='python'
+                    showLineNumbers={true}
+                    wrapLines={true}
+                    customStyle={{
+                        backgroundColor: event.passTest? "#F0F0F0": "#FEDFE1",
+                        opacity: event.hasFeedback? "50%": "100%",
+                    }}
+                    lineProps={(lineNumber: number): React.HTMLProps<HTMLElement> => {
+                        const style: React.CSSProperties = {display: "block", width: "100%"};
+                        if (event.output!.match(/\d+/g)?.includes(lineNumber.toString())){
+                            style.backgroundColor="#F596AA";
+                        }
+                        return {style};
+                    }}
+                    >{event.code}</SyntaxHighlighter> 
+
+                </div>
+            })}
+
+            </div>
+
+        }
     }
 
     render(): any {
@@ -339,6 +457,14 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                             </div>:null}
                         </div>
                         <div className='scatter-right-view'>
+                            {/* search user name */}
+                            <form onSubmit={this.model.searchUserSubmit()}>
+                                <label>
+                                    Search User:
+                                    <input type="text" value={this.model.searchUser} onChange={this.model.searchUserChange()}/>
+                                </label>
+                                <input type="submit" value="Submit"/>
+                            </form>
                             {/* feedback */}
                             <form onSubmit={this.model.feedbackSubmit()}>
                                 <label>
@@ -347,28 +473,8 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                                 </label>
                                 <input type="submit" value="Submit"/>
                             </form>
-                            {this.model.selectedEvents.map((event: DLEvent, index: number) => {
-                                return <div>
-                                    {event.passTest? null: <span>{event.output==='success'? 'Failed the test case': event.output}</span>}
-                                    <SyntaxHighlighter 
-                                    language='python'
-                                    showLineNumbers={true}
-                                    wrapLines={true}
-                                    customStyle={{
-                                        backgroundColor: event.passTest? "#F0F0F0": "#FEDFE1",
-                                        opacity: event.hasFeedback? "50%": "100%",
-                                    }}
-                                    lineProps={(lineNumber: number): React.HTMLProps<HTMLElement> => {
-                                        const style: React.CSSProperties = {display: "block", width: "100%"};
-                                        if (event.output!.match(/\d+/g)?.includes(lineNumber.toString())){
-                                            style.backgroundColor="#F596AA";
-                                        }
-                                        return {style};
-                                    }}
-                                    >{event.code}</SyntaxHighlighter> 
-
-                                </div>
-                            })}
+                            {/* solution list */}
+                            {this.renderEventList(this.model.groupError)}
                         </div>
                     </div>
                 }}
