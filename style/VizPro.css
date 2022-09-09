@@ -39,7 +39,14 @@ circle.selected{
 .userbox:hover{
     background-color: antiquewhite;
 }
+.userbox.selected{
+    background-color: antiquewhite;
+}
 
 .error-type{
     font-size: 150%;
+}
+
+.trajectory.focus{
+    opacity: 100%;
 }

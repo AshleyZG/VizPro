@@ -231,10 +231,23 @@ class VizProModel extends VDomModel {
         var paths = graph.selectAll('.trajectory');
         var historyDots = graph.selectAll('.history-dot');
 
+        currentDots.attr('visibility', 'visible');
+        paths.attr('visibility', 'visible');
+        historyDots.attr('visibility', 'visible');    
+
+        paths.selectAll('path')
+            .style('stroke-width', '0.1')
+            .style('stroke-opacity', '0.1')
+
+
         currentDots.filter(function(d, i){return d!==name;})
             .attr('visibility', 'hidden');
         paths.filter(function(d, i){return d!==name;})
             .attr('visibility', 'hidden');
+        paths.filter(function(d, i){return d===name;})
+            .selectAll('path')
+            .style('stroke-opacity', '1')
+            .style('stroke-width', '0.5')
         historyDots.filter(function(d, i){return d!==name;})
             .attr('visibility', 'hidden');
 
@@ -252,7 +265,11 @@ class VizProModel extends VDomModel {
     userOnClick(){
         const scope = this;
         function fn(event: React.MouseEvent){
+            // console.log(d3.selectAll('.userbox').size());
+            d3.selectAll('.userbox')
+                .classed('selected', false);
             var target = event.currentTarget;
+            target.classList.add('selected');
             scope.focusOnUser(scope, target.id);
             scope.stateChanged.emit();
 
@@ -265,10 +282,12 @@ class VizProModel extends VDomModel {
         var scope = this;
         function fn(event:  React.FormEvent<HTMLFormElement>){
             // debugger;
-            scope.focusOnUser(scope, scope.searchUser!+'@umich.edu.json');
-            scope.searchUser = "";
-            event.preventDefault();
-            scope.stateChanged.emit();
+            if (scope.searchUser?.startsWith('user_')){
+                scope.focusOnUser(scope, scope.searchUser!+'@umich.edu.json');
+                scope.searchUser = "";
+                event.preventDefault();
+                scope.stateChanged.emit();    
+            }
         }
         return fn;
     }
@@ -338,7 +357,7 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                         <span className='error-type'>{error} {groups[error].length} submissions</span>
                         {groups[error].map((e: DLEvent) => {
                             return <div>
-                                <span>{e.output==='success'? error: e.output}</span>
+                                <span>{e.output==='success'? error: e.output} {e.sid.split('@')[0]}</span>
                                 <SyntaxHighlighter 
                                 language='python'
                                 showLineNumbers={true}
@@ -429,8 +448,10 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                             ></VizProViz>
                         </div>
                         <div className='scatter-middle-view'>
+                            {/* class size */}
+                            {<p><span>The whole class has {this.model.activeUsers.length} students.</span></p>}
                             {/* number of correct/incorrect solutions */}
-                            {this.model.selectedClusterID? <p><span style={{color: 'green'}}>{this.model.selectedCorrectSolutions?.length}</span> correct solutions, <span style={{color: 'red'}}>{this.model.selectedIncorrectSolutions?.length}</span> incorrect solutions.</p>: null}
+                            {this.model.selectedClusterID? <p><span style={{color: 'green'}}>{this.model.selectedCorrectSolutions?.length}</span> students have correct solutions, <span style={{color: 'red'}}>{this.model.selectedIncorrectSolutions?.length}</span> students have incorrect solutions.</p>: null}
                             {/* see all students' name */}
                             {this.model.selectedClusterID? <div>
                                 {this.model.selectedCorrectNames?.map((name: string) => {

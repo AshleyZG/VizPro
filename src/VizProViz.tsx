@@ -59,7 +59,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             this.userCluster[name] = -1;
             this.userCorrectness[name] = false;
             this.paths[name] = d3.path();
-            this.paths[name].moveTo(0, 0);
+            this.paths[name].moveTo(0, HEIGHT);
         })
 
         this.clusterProgress[-1] = {correct: [], incorrect: [], names: []};
@@ -163,7 +163,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
     calculateX(event: DLEvent, newClusterID: number){  
         //   replace distance with edit distance
         const WIDTH = this.props.width;
-        var scaler = scaleLinear().domain([0, WIDTH*0.3]).range([0, WIDTH*0.8]);
+        var scaler = scaleLinear().domain([0, WIDTH*0.2]).range([5, WIDTH*0.8]);
 
         if (event.type==='run' && event.passTest){
             if (event.clusterID){
@@ -270,7 +270,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
                 .attr('r', 2)
                 .attr('cx', x)
                 .attr('cy', y)
-                .attr('fill', passTest? 'green':'red')
+                .attr('fill', 'grey')
                 .attr('opacity', '50%');
 
         }
@@ -302,7 +302,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
     focusSolution(scope: any, clusterID: number){
 
-        scope.resetGraph
+        // scope.resetGraph
 
         // get all names in this solution
         var names = scope.clusterProgress[clusterID].names;
@@ -313,6 +313,17 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
         var currentDots = graph.selectAll('.current-dot');
         var paths = graph.selectAll('.trajectory');
         var historyDots = graph.selectAll('.history-dot');
+
+        // reset graph first
+
+        currentDots.attr('visibility', 'visible');
+        paths.attr('visibility', 'visible');
+        historyDots.attr('visibility', 'visible');    
+
+        paths.selectAll('path')
+            .style('stroke-width', '0.1')
+            .style('stroke-opacity', '0.1')
+
 
         // only show these names, hide others
         currentDots.filter(function(d, i){return !names.includes(d);})
@@ -334,10 +345,13 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             var paths = graph.selectAll('.trajectory');
             var historyDots = graph.selectAll('.history-dot');
     
-            // only show these names, hide others
             currentDots.attr('visibility', 'visible');
             paths.attr('visibility', 'visible');
             historyDots.attr('visibility', 'visible');    
+
+            paths.selectAll('path')
+                .style('stroke-width', '0.1')
+                .style('stroke-opacity', '0.1')
         }
 
     }
@@ -366,7 +380,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
         dots.append('circle')
             .attr('r', 2)
             .attr('cx', '0')
-            .attr('cy', '0')
+            .attr('cy', HEIGHT)
             .attr('fill', function(d, i){return 'red'})
 
         // add a path for each dot

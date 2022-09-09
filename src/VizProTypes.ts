@@ -16,6 +16,7 @@ export interface OverCodeCluster {
 
 
 export interface DLEvent{
+    sid: string,
     id: string,
     code: string,
     passTest: boolean,
