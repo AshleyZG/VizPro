@@ -1,6 +1,6 @@
 import React from 'react';
 import * as d3 from 'd3';
-import { scaleLinear, scaleSequential } from 'd3-scale';
+import { scaleLinear, scaleSequential, scaleLog } from 'd3-scale';
 
 import { DLEvent, Position, OverCodeCluster } from './VizProTypes';
 import {levenshteinEditDistance} from 'levenshtein-edit-distance';
@@ -78,9 +78,9 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
         const scope = this;
 
-        // const scalerTime = scaleLog()
-        //     .domain([1, 46272942000])
-        //     .range([0, 16*60*1000])
+        const scalerTime = scaleLog()
+            .domain([1, 7208569070+5])
+            .range([0, 0.5*60*1000])
 
         activeUsers.forEach((name: string) => {
             events[name].forEach((event: DLEvent, index: number)=>{
@@ -92,10 +92,8 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
                     scope.paths[name].lineTo(x, y);
                     
                     scope.updateGraph(name, x, y, event.passTest, event);
-                }, index*10);    
+                }, scalerTime(event.timeOffset+1));    
 
-                // if (scalerTime(event.timeOffset+1) < 15*60*1000){
-                // }
             })
         })
     }
@@ -218,7 +216,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .duration(500)
             .attr('cx', x)
             .attr('cy', y)
-            .attr('fill', passTest? 'green':'red');
+            .attr('fill', passTest? 'blue':'orange');
 
         // update path
         var path = graph.selectAll('.trajectory').select(function(d, i){return d===name? this: null}).select('path');
@@ -231,7 +229,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             var historyDots = graph.selectAll('.history-dot').select(function(d, i){return d===name? this: null});
             historyDots.append('circle')
                 .datum(event)
-                .attr('r', 2)
+                .attr('r', 2.5)
                 .attr('cx', x)
                 .attr('cy', y)
                 .attr('fill', 'grey')
@@ -372,12 +370,13 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
                         .attr('width', WIDTH)
                         .attr('height', HEIGHT);
 
-        // var stats = graph.append('g')
-        //     .attr('class', 'stats')
-        // stats.append('text')
-        //     .text(`0 Correct Submissions, ${scope.props.activeUsers.length} Incorrect Submissions`)
-        //     .attr('x', 200)
-        //     .attr('y', 15)
+        // add a group of history dots for each user
+        graph.selectAll('.history-dot')
+            .data(activeUsers)
+            .enter()
+            .append('g')
+            .attr('class', 'history-dot')
+            .attr('id', function(d,i){return d});
 
         // draw init dots
         var dots = graph.selectAll('.current-dot')
@@ -387,10 +386,10 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .attr('class', 'current-dot')
             .attr('id', function(d, i){return d});
         dots.append('circle')
-            .attr('r', 2)
+            .attr('r', 5)
             .attr('cx', '0')
             .attr('cy', HEIGHT)
-            .attr('fill', function(d, i){return 'red'})
+            .attr('fill', function(d, i){return 'orange'})
 
         // add a path for each dot
         var paths = graph.selectAll('.trajectory')
@@ -407,13 +406,6 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .style('stroke-opacity', '0.1')
             .style('fill', 'none');
 
-        // add a group of history dots for each user
-        graph.selectAll('.history-dot')
-            .data(activeUsers)
-            .enter()
-            .append('g')
-            .attr('class', 'history-dot')
-            .attr('id', function(d,i){return d});
 
 
         // draw correct solution tags
@@ -424,11 +416,11 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .attr('class', 'solution-tag')
             .attr('id', function(d, i){return d});
         tags.append('rect')
-            .attr('width', 50)
+            .attr('width', 20)
             .attr('height', 5)
-            .attr('x', function(d, i){ return WIDTH*0.8+5+Math.random()*20})
+            .attr('x', function(d, i){ return WIDTH*0.8+5+Math.random()*50})
             // .attr('y', function(d, i){return HEIGHT/clusterIDs.length*(i+1)})
-            .attr('y', function(d, i){return scope.scalerY(scope.props.position[d].y)})
+            .attr('y', function(d, i){return Math.random()*5+scope.scalerY(scope.props.position[d].y)})
             .attr('rx', 2)
             .attr('fill', 'gray')
             .attr('opacity', '50%')

@@ -31,10 +31,10 @@ circle.selected{
     
 }
 .userbox.correct{
-    background-color: rgb(168, 221, 168);
+    background-color: rgb(255, 214, 139);
 }
 .userbox.incorrect{
-    background-color: rgb(226, 165, 165);
+    background-color: rgb(255, 214, 139);
 }
 .userbox:hover{
     background-color: antiquewhite;

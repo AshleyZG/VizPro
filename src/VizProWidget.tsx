@@ -355,13 +355,13 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                                 showLineNumbers={true}
                                 wrapLines={true}
                                 customStyle={{
-                                    backgroundColor: e.passTest? "#F0F0F0": "#FEDFE1",
+                                    backgroundColor: e.passTest? "gainsboro": "rgb(255, 214, 139)",
                                     opacity: e.hasFeedback? "50%": "100%",
                                 }}
                                 lineProps={(lineNumber: number): React.HTMLProps<HTMLElement> => {
                                     const style: React.CSSProperties = {display: "block", width: "100%"};
                                     if (e.output!.match(/\d+/g)?.includes(lineNumber.toString())){
-                                        style.backgroundColor="#F596AA";
+                                        style.backgroundColor="orange";
                                     }
                                     return {style};
                                 }}
@@ -389,13 +389,13 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                     showLineNumbers={true}
                     wrapLines={true}
                     customStyle={{
-                        backgroundColor: event.passTest? "#F0F0F0": "#FEDFE1",
+                        backgroundColor: event.passTest? "gainsboro": "rgb(255, 214, 139)",
                         opacity: event.hasFeedback? "50%": "100%",
                     }}
                     lineProps={(lineNumber: number): React.HTMLProps<HTMLElement> => {
                         const style: React.CSSProperties = {display: "block", width: "100%"};
                         if (event.output!.match(/\d+/g)?.includes(lineNumber.toString())){
-                            style.backgroundColor="#F596AA";
+                            style.backgroundColor="orange";
                         }
                         return {style};
                     }}
@@ -465,7 +465,7 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                                     return <SyntaxHighlighter 
                                     language='python'
                                     customStyle={{
-                                        backgroundColor: "#FEDFE1"
+                                        backgroundColor: "rgb(255, 214, 139)"
                                     }}
                                       >{code}</SyntaxHighlighter>
                                 })}
