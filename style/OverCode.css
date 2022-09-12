@@ -1,0 +1,52 @@
+.commit-unit{
+    display: inline-block;
+    height: 10px;
+    width: 20px;
+    border-color: black;
+    border-width: 1px;
+    border-style: solid;
+}   
+.recover-unit{
+    display: inline-block;
+    height: 10px;
+    width: 20px;
+    border-color: black;
+    border-width: 1px;
+    border-style: dashed;
+    fill: gray;
+}
+
+.name{
+    font-size: 150%;
+}
+.codeblock{
+    white-space: pre-wrap;
+    background-color: gainsboro;
+}
+.overcode-right-panel{
+    vertical-align: top;
+    display: inline-block;
+    width: 70%;
+    height: 700px;
+    overflow-y: scroll;
+
+}
+.overcode-left-panel{
+    display: inline-block;
+    width: 30%;
+    height: 700px;
+    overflow-y: scroll;
+}
+
+.overcode-block{
+    display: inline-block;
+    vertical-align: top;
+    margin: 5px;
+    width: 30%;
+}
+
+.codeblock.incorrect{
+    background-color: pink;
+    vertical-align: top;
+
+}
