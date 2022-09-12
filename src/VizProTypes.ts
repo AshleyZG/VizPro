@@ -20,6 +20,7 @@ export interface DLEvent{
     id: string,
     code: string,
     passTest: boolean,
+    // passed_test: boolean,
     target: string,
     timeOffset: number,
     type: string,

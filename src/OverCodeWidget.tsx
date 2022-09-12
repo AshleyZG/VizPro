@@ -10,10 +10,11 @@ import { scaleLog } from 'd3-scale';
 import { DLEvent, Position, MyNode, OverCodeCluster } from './VizProTypes';
 var overcode_result: any;
 
-fetch('https://raw.githubusercontent.com/AshleyZG/VizProData/master/solutions.json')
+fetch('https://raw.githubusercontent.com/AshleyZG/VizProData/master/ac6_8_9_all_solutions.json')
     .then((response) => response.json())
     .then((responseJson) => {
         overcode_result = responseJson;
+        console.log(overcode_result)
     })
     .catch((error) => {
         console.error(error);
@@ -99,11 +100,11 @@ class OverCodeModel extends VDomModel {
 
         const scalerTime = scaleLog()
         .domain([1, 46272942000])
-        .range([0, 16*60*1000])
+        .range([0, 1*60*1000])
 
         this.activeUsers.forEach((name: string) => {
             this.events[name].forEach((event: DLEvent, index: number) => {
-                if (scalerTime(event.timeOffset+1) < 15*60*1000){
+                if (scalerTime(event.timeOffset+1) < 1*60*1000){
                     setTimeout(() => {
                         scope.currentCode[name] = event.code;
                         if (event.type==='start'){
@@ -224,11 +225,15 @@ class OverCodeModel extends VDomModel {
         var idx = this.overCodeCandidates[name].length-1;
         var new_name = name.split('@')[0];
         var key = new_name+'_'+idx;
+        var key = event.id;
+        if (!(key in this.overCodeResults)){
+            return;
+        }
         var cluster_id = this.overCodeResults[key];
 
-        if (['19114', '7071'].includes(event.id)){
-            cluster_id = 12;
-        }
+        // if (['19114', '7071'].includes(event.id)){
+        //     cluster_id = 12;
+        // }
 
         event.clusterID = cluster_id;
 

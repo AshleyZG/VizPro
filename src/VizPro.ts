@@ -22,14 +22,14 @@ import { DLEvent } from './VizProTypes';
 
 var allEvents: any = {};
 
-fetch('https://raw.githubusercontent.com/AshleyZG/VizProData/master/url-list.json')
+fetch('https://raw.githubusercontent.com/AshleyZG/VizProData/master/url-list-session2.json')
     .then((response) => response.json())
     .then((responseJson) => {
         responseJson.forEach((url: string) => {
             fetch(url)
                 .then((response) => response.json())
                 .then((content) => {
-                    var key = content[0]['sid']+'.json';
+                    var key = content[0]['sid'];
                     allEvents[key] = content;
                 })
                 .catch((error)=>{

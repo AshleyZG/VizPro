@@ -1,6 +1,6 @@
 import React from 'react';
 import * as d3 from 'd3';
-import { scaleLinear, scaleSequential, scaleLog } from 'd3-scale';
+import { scaleLinear, scaleSequential } from 'd3-scale';
 
 import { DLEvent, Position, OverCodeCluster } from './VizProTypes';
 import {levenshteinEditDistance} from 'levenshtein-edit-distance';
@@ -43,6 +43,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
     clusterProgress: {[clusterID: number]: {correct: string[], incorrect: string[], names: string[]}} = {}
     userCorrectness: {[name: string]: boolean} = {};
     userCode: {[name: string]: string} = {};
+    userEvent: {[name: string]: DLEvent} = {};
 
     constructor(props: any){
         super(props);
@@ -50,7 +51,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
         const WIDTH = this.props.width;
         const HEIGHT = this.props.height;
 
-        this.scalerX = scaleLinear().domain([this.props.minX, this.props.maxX]).range([0, WIDTH]);
+        this.scalerX = scaleLinear().domain([this.props.minX, this.props.maxX]).range([0, WIDTH*0.8]);
         this.scalerY = scaleLinear().domain([this.props.minY, this.props.maxY]).range([0, HEIGHT]);
         this.scalerColor = scaleSequential(d3.interpolateRdYlGn).domain([0, 1]);
 
@@ -77,28 +78,31 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
         const scope = this;
 
-        const scalerTime = scaleLog()
-            .domain([1, 46272942000])
-            .range([0, 16*60*1000])
+        // const scalerTime = scaleLog()
+        //     .domain([1, 46272942000])
+        //     .range([0, 16*60*1000])
 
         activeUsers.forEach((name: string) => {
             events[name].forEach((event: DLEvent, index: number)=>{
-                if (scalerTime(event.timeOffset+1) < 15*60*1000){
-                    setTimeout(()=>{
-                        var [x, y] = scope.calculatePos(name, event);
-                        scope.userCode[name] = event.code;
-                        // move path
-                        scope.paths[name].lineTo(x, y);
-                        
-                        scope.updateGraph(name, x, y, event.passTest, event);
-                    }, scalerTime(event.timeOffset+1));    
-                }
+                setTimeout(()=>{
+                    var [x, y] = scope.calculatePos(name, event);
+                    scope.userCode[name] = event.code;
+                    scope.userEvent[name] = event;
+                    // move path
+                    scope.paths[name].lineTo(x, y);
+                    
+                    scope.updateGraph(name, x, y, event.passTest, event);
+                }, index*10);    
+
+                // if (scalerTime(event.timeOffset+1) < 15*60*1000){
+                // }
             })
         })
     }
 
     dist(posA: Position, posB:Position){
-        return (posA.x-posB.x)**2+(posA.y-posB.y)**2;
+        return Math.abs(posA.y-posB.y);
+        // return (posA.x-posB.x)**2+(posA.y-posB.y)**2;
     }
 
     distToCluster(event: DLEvent, clusterID: number): number{
@@ -127,18 +131,14 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
     }
 
     calculateY(event: DLEvent, name: string){
-        var clusterIDs = this.props.clusterIDs;
-        const HEIGHT = this.props.height;
 
-        if (event.type==='run' && event.passTest){
-            if (event.clusterID){
-                var y = HEIGHT / clusterIDs.length * (clusterIDs.indexOf(event.clusterID)+0.75)
-                return [y, event.clusterID];
-            }else{
-                console.log('pass test but not have cluster id, need check here');
-                return [0, 1];
-            }
+        var clusterIDs = this.props.clusterIDs;
+
+        if (event.clusterID && event.passTest){
+            console.log(event.clusterID)
+            return [this.scalerY(this.props.position[event.clusterID].y), event.clusterID];
         }
+
 
         // find the position where it should be at
         var minDist = Infinity;
@@ -152,7 +152,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
         }
         var newClusterID = targetID;
 
-        var y = HEIGHT/clusterIDs.length*(clusterIDs.indexOf(newClusterID)+0.75);
+        var y = this.scalerY(event.y);
         return [y, newClusterID];
     }
 
@@ -160,44 +160,23 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
         return levenshteinEditDistance(code1, code2);
     }
 
-    calculateX(event: DLEvent, newClusterID: number){  
-        //   replace distance with edit distance
+    calculateX(event: DLEvent){  
         const WIDTH = this.props.width;
-        var scaler = scaleLinear().domain([0, WIDTH*0.2]).range([5, WIDTH*0.8]);
 
         if (event.type==='run' && event.passTest){
-            if (event.clusterID){
-                return WIDTH*0.8;
-            }else{
-                console.log('pass test but not have cluster id, need check here');
-                return 0;
-            }
+            return WIDTH*0.8;
         }
-        var editDist = this.editDistanceToCluster(event, newClusterID);
-        var x = WIDTH*0.8-scaler(editDist);
-        return x;
+
+        return this.scalerX(event.x);
     }
 
     calculatePos(name:string, event: DLEvent){
-
-        // log previous cluster
         var prevClusterID = this.userCluster[name];
-
-        // calculate y
-        // here y means which solution it is most close to
+        var x = this.calculateX(event);
+        // var y = this.scalerY(event.y);
         var [y, newClusterID] = this.calculateY(event, name);
         this.userCluster[name] = newClusterID;
-
-        if (newClusterID>100){
-            console.log(name, event);
-        }
-        // every time y updates, should update how many dots are in each cluster
         this.updateClusterProgress(name, prevClusterID, newClusterID, event.passTest);
-
-        // calculate x
-        // here x means how far away the dot is from coresponding solution
-        var x = this.calculateX(event, newClusterID);
-
         return [x, y];
     }
 
@@ -226,22 +205,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
         }
         this.clusterProgress[newClusterID].names.push(name);
 
-        this.updateProgressGraph(prevClusterID, newClusterID);
 
-    }
-
-    private updateProgressGraph(prevClusterID: number, newClusterID: number){
-        const graph = d3.select('.viz-canvas')
-        const WIDTH = this.props.width;
-        var scope = this;
-
-        var wScale = scaleLinear().domain([0, 1]).range([0, WIDTH*0.1]);
-
-        var progressBars = graph.selectAll('.progress-bar').filter(function(d, i){return d===prevClusterID || d===newClusterID});
-
-        progressBars.selectAll('rect')
-            .attr('width', function(d, i){return wScale(scope.clusterProgress[d as number].correct.length/(scope.clusterProgress[d as number].correct.length+scope.clusterProgress[d as number].incorrect.length+0.0001))})
-            .attr('fill', 'green')
     }
 
 
@@ -274,6 +238,10 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
                 .attr('opacity', '50%');
 
         }
+
+        // var correctSize = graph.selectAll('.current-dot').select(function(d, i){return d===name?  this : null}).select('circle').filter(function(d, i){return d3.select(this).attr('fill')==='green'}).size();
+        // var incorrectSize = graph.selectAll('.current-dot').select(function(d, i){return d===name?  this : null}).select('circle').filter(function(d, i){return d3.select(this).attr('fill')==='red'}).size();
+        // graph.select('.stats').select('text').text(`${correctSize} Correct Submissions, ${incorrectSize} Incorrect Submissions`)
     }
 
     updateBrush(scope: any, event: any){
@@ -292,11 +260,23 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
         var extent = d3.brushSelection((graph.select('.brush') as any).node());
         var historyDots = graph.selectAll('.history-dot');
+        var currentDots = graph.selectAll('.current-dot');
 
         if (extent){
-            historyDots.selectAll('circle')
-            .classed("selected", function(d){return isBrushed(extent!, d3.select(this).attr('cx'), d3.select(this).attr('cy')) && d3.select((this as any).parentNode).attr('visibility')!=='hidden'})
-            scope.props.onBrushChangeFn(historyDots.selectAll('circle.selected').data() as DLEvent[])
+            if (historyDots.attr('visibility')==='hidden'){
+                currentDots.selectAll('circle')
+                .classed("selected", function(d){
+                    return isBrushed(extent!, d3.select(this).attr('cx'), d3.select(this).attr('cy')) && d3.select((this as any).parentNode).attr('visibility')!=='hidden'})
+                console.log(currentDots.selectAll('circle.selected').size());
+                scope.props.onBrushChangeFn((currentDots.selectAll('circle.selected').data() as string[]).map((d: string) => {return scope.userEvent[d]}))
+
+            
+            }else{
+                historyDots.selectAll('circle')
+                .classed("selected", function(d){return isBrushed(extent!, d3.select(this).attr('cx'), d3.select(this).attr('cy')) && d3.select((this as any).parentNode).attr('visibility')!=='hidden'})
+                scope.props.onBrushChangeFn(historyDots.selectAll('circle.selected').data() as DLEvent[])
+    
+            }
         }
     }
 
@@ -337,10 +317,11 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
     resetGraph(event: any){
         // make all element visible
         const graph = d3.select('.viz-canvas');
-        var outsideSolutionTag = graph.selectAll('.solution-tag').selectAll('text').filter(function(d, i){return this===event.target}).empty() 
+        var outsideSolutionTag = graph.selectAll('.solution-tag').selectAll('rect').filter(function(d, i){return this===event.target}).empty() 
         var outsideUserbox = d3.selectAll('.userbox').filter(function(d, i){return this===event.target.parentElement}).empty();
+        var outsideButton = d3.select('.button').selectAll('text').filter(function(d, i){return this===event.target}).empty()
 
-        if (outsideSolutionTag && outsideUserbox){
+        if (outsideSolutionTag && outsideUserbox && outsideButton){
             var currentDots = graph.selectAll('.current-dot');
             var paths = graph.selectAll('.trajectory');
             var historyDots = graph.selectAll('.history-dot');
@@ -356,6 +337,33 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
     }
 
+    switchHistoryVisible(event: any){
+        var target = event.target; 
+
+        var content = d3.select(target).text();
+
+        const graph: d3.Selection<any, unknown, HTMLElement, any> = d3.select('.viz-canvas') 
+
+        if (content.startsWith('Hide')){
+            d3.select(target).text('Show History Versions');
+            // hide history dots
+            var paths = graph.selectAll('.trajectory');
+            var historyDots = graph.selectAll('.history-dot');
+            paths.attr('visibility', 'hidden');
+            historyDots.attr('visibility', 'hidden');    
+
+
+        }else{
+            d3.select(target).text( 'Hide History Versions');
+            // show history dots
+            var paths = graph.selectAll('.trajectory');
+            var historyDots = graph.selectAll('.history-dot');
+            paths.attr('visibility', 'visible');
+            historyDots.attr('visibility', 'visible');    
+
+        }
+    }
+
     private initGroup(){
 
         var activeUsers = this.props.activeUsers;
@@ -369,6 +377,12 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
                         .attr('width', WIDTH)
                         .attr('height', HEIGHT);
 
+        // var stats = graph.append('g')
+        //     .attr('class', 'stats')
+        // stats.append('text')
+        //     .text(`0 Correct Submissions, ${scope.props.activeUsers.length} Incorrect Submissions`)
+        //     .attr('x', 200)
+        //     .attr('y', 15)
 
         // draw init dots
         var dots = graph.selectAll('.current-dot')
@@ -414,32 +428,25 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .append('g')
             .attr('class', 'solution-tag')
             .attr('id', function(d, i){return d});
-        tags.append('text')
-            .text(function(d, i){return `Solution ${i}`})
-            .attr('x', WIDTH*0.8)
-            .attr('y', function(d, i){return HEIGHT/clusterIDs.length*(i+1)})
-            .attr('fill', 'black')
+        tags.append('rect')
+            .attr('width', 50)
+            .attr('height', 5)
+            .attr('x', function(d, i){ return WIDTH*0.8+5+Math.random()*20})
+            // .attr('y', function(d, i){return HEIGHT/clusterIDs.length*(i+1)})
+            .attr('y', function(d, i){return scope.scalerY(scope.props.position[d].y)})
+            .attr('rx', 2)
+            .attr('fill', 'gray')
+            .attr('opacity', '50%')
+            // .attr('stroke', 'black')
             .on('mouseover', function(event, d){
                 scope.props.circleMouseOverFn(d, scope.clusterProgress[d].correct.map((value: string)=>{return scope.userCode[value]}), scope.clusterProgress[d].incorrect.map((value: string)=>{return scope.userCode[value]}), scope.clusterProgress[d].correct, scope.clusterProgress[d].incorrect);
             })
             .on('click', function(event, d){
                 scope.focusSolution(scope, d);
             })
+            
         // append progress bar to tag
-        var wScale = scaleLinear().domain([0, 1]).range([0, WIDTH*0.1]);
-        var progressBars = graph.selectAll('.progress-bar')
-            .data(clusterIDs)
-            .enter()
-            .append('g')
-            .attr('class', 'progress-bar')
-            .attr('id', function(d, i){return d});
-
-        progressBars.append('rect')
-            .attr('x', WIDTH*0.9)
-            .attr('y', function(d, i){return HEIGHT/clusterIDs.length*(i+0.5)})
-            .attr('width', function(d, i){return wScale(scope.clusterProgress[d].correct.length/(scope.clusterProgress[d].correct.length+scope.clusterProgress[d].incorrect.length+0.0001))})
-            .attr('height', HEIGHT/clusterIDs.length*0.5)
-            .attr('fill', 'green')
+        // var wScale = scaleLinear().domain([0, 1]).range([0, WIDTH*0.1]);
 
 
         // add brush to svg
@@ -451,6 +458,28 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
                 scope.updateBrush(scope, event);
             }), null
         )
+
+        
+        // add button to hide all history versions
+        var button = graph.append('g')
+            .attr('class', 'button')
+            .attr('id', 'button')
+
+        button.append('rect')
+            .attr('fill', 'gainsboro')
+            .attr('width', 150)
+            .attr('height', 25)
+            .attr('rx', 10)
+            .attr('x', 0)
+            .attr('y', 0)
+        button.append('text')
+            .attr('x', 10)
+            .attr('y', 20)
+            .text('Hide History Versions')
+            .on('click', function(event, d){
+                scope.switchHistoryVisible(event);
+            })
+
 
 
         d3.select('body').on('click', function(event, d){

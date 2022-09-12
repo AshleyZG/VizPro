@@ -7,10 +7,12 @@ import { VizProViz } from './VizProViz';
 import { DLEvent, Position, MyNode, OverCodeCluster } from './VizProTypes';
 var overcode_result: any;
 
-fetch('https://raw.githubusercontent.com/AshleyZG/VizProData/master/solutions.json')
+fetch('https://raw.githubusercontent.com/AshleyZG/VizProData/master/ac6_8_9_last_solution.json')
     .then((response) => response.json())
     .then((responseJson) => {
         overcode_result = responseJson;
+        console.log(overcode_result);
+        // overcode_result=[];
     })
     .catch((error) => {
         console.error(error);
@@ -72,6 +74,10 @@ class VizProModel extends VDomModel {
         var idx = this.overCodeCandidates[name].length-1;
         var new_name = name.split('@')[0];
         var key = new_name+'_'+idx;
+        var key = event.id;
+        if (! (key in this.overCodeResults)){
+            return;
+        }
         var cluster_id = this.overCodeResults[key];
 
         if (['19114', '7071'].includes(event.id)){
@@ -79,7 +85,7 @@ class VizProModel extends VDomModel {
         }
 
         event.clusterID = cluster_id;
-
+        console.log(event.clusterID);
         if (this.rawOverCodeResults[cluster_id-1].correct && !(this.clusterIDs.includes(cluster_id))){
             this.clusterIDs.push(cluster_id);
         }
@@ -122,20 +128,6 @@ class VizProModel extends VDomModel {
 
     sortClusterIDs(){
 
-        function dist(posA: Position, posB:Position){
-            return (posA.x-posB.x)**2+(posA.y-posB.y)**2;
-        }
-
-        // find largest cluster id
-        var maxN = -Infinity;
-        var maxID = -1;
-        this.clusterIDs.forEach((id: number) => {
-            if (this.overCodeClusters[id].count > maxN){
-                maxID = id;
-                maxN = this.overCodeClusters[id].count;
-            }
-        })
-
         var position: {[id: number]: Position} = {};
         this.clusterIDs.forEach((id: number) => {
             position[id] =  this.averagePosition(this.overCodeClusters[id].positions!)
@@ -144,9 +136,9 @@ class VizProModel extends VDomModel {
         // sort 2d array
         // directly sort this.clusterIDs
         this.clusterIDs.sort((a, b)=>{
-            var positionA = position[a];
-            var positionB = position[b];
-            return dist(positionA, position[maxID]) - dist(positionB, position[maxID]);
+            var positionA = position[a].y;
+            var positionB = position[b].y;
+            return positionA-positionB;
         });
     }
 
@@ -283,7 +275,7 @@ class VizProModel extends VDomModel {
         function fn(event:  React.FormEvent<HTMLFormElement>){
             // debugger;
             if (scope.searchUser?.startsWith('user_')){
-                scope.focusOnUser(scope, scope.searchUser!+'@umich.edu.json');
+                scope.focusOnUser(scope, scope.searchUser!+'@umich.edu');
                 scope.searchUser = "";
                 event.preventDefault();
                 scope.stateChanged.emit();    
@@ -450,6 +442,8 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                         <div className='scatter-middle-view'>
                             {/* class size */}
                             {<p><span>The whole class has {this.model.activeUsers.length} students.</span></p>}
+                            {/* solution type */}
+                            <p><span>Solution {this.model.selectedClusterID}</span></p>
                             {/* number of correct/incorrect solutions */}
                             {this.model.selectedClusterID? <p><span style={{color: 'green'}}>{this.model.selectedCorrectSolutions?.length}</span> students have correct solutions, <span style={{color: 'red'}}>{this.model.selectedIncorrectSolutions?.length}</span> students have incorrect solutions.</p>: null}
                             {/* see all students' name */}
