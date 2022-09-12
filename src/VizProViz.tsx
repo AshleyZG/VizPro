@@ -135,7 +135,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
         var clusterIDs = this.props.clusterIDs;
 
         if (event.clusterID && event.passTest){
-            console.log(event.clusterID)
+            // console.log(event.clusterID)
             return [this.scalerY(this.props.position[event.clusterID].y), event.clusterID];
         }
 
@@ -259,25 +259,20 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
         const graph: d3.Selection<any, unknown, HTMLElement, any> = d3.select('.viz-canvas') 
 
         var extent = d3.brushSelection((graph.select('.brush') as any).node());
+
+        if (!extent){return;}
         var historyDots = graph.selectAll('.history-dot');
         var currentDots = graph.selectAll('.current-dot');
 
-        if (extent){
-            if (historyDots.attr('visibility')==='hidden'){
-                currentDots.selectAll('circle')
-                .classed("selected", function(d){
-                    return isBrushed(extent!, d3.select(this).attr('cx'), d3.select(this).attr('cy')) && d3.select((this as any).parentNode).attr('visibility')!=='hidden'})
-                console.log(currentDots.selectAll('circle.selected').size());
-                scope.props.onBrushChangeFn((currentDots.selectAll('circle.selected').data() as string[]).map((d: string) => {return scope.userEvent[d]}))
+        currentDots.selectAll('circle')
+            .classed("selected", function(d){
+                return isBrushed(extent!, d3.select(this).attr('cx'), d3.select(this).attr('cy')) && d3.select((this as any).parentNode).attr('visibility')!=='hidden'})
 
-            
-            }else{
-                historyDots.selectAll('circle')
-                .classed("selected", function(d){return isBrushed(extent!, d3.select(this).attr('cx'), d3.select(this).attr('cy')) && d3.select((this as any).parentNode).attr('visibility')!=='hidden'})
-                scope.props.onBrushChangeFn(historyDots.selectAll('circle.selected').data() as DLEvent[])
-    
-            }
-        }
+        historyDots.selectAll('circle')
+            .classed("selected", function(d){return isBrushed(extent!, d3.select(this).attr('cx'), d3.select(this).attr('cy')) && d3.select((this as any).parentNode).attr('visibility')!=='hidden'})
+        
+        scope.props.onBrushChangeFn(((currentDots.selectAll('circle.selected').data() as string[]).map((d: string) => {return scope.userEvent[d]})).concat(historyDots.selectAll('circle.selected').data() as DLEvent[]))
+
     }
 
     focusSolution(scope: any, clusterID: number){

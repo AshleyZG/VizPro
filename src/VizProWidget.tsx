@@ -206,7 +206,7 @@ class VizProModel extends VDomModel {
     onBrushChange(){
         const scope = this;
         function fn(events: DLEvent[]){
-            scope.selectedEvents = events;
+            scope.selectedEvents = events.filter((value: DLEvent) => {return value.type==='run'});
             scope.feedback = "";
             scope.groupError = true;
             scope.stateChanged.emit();

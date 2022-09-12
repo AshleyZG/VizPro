@@ -99,48 +99,56 @@ class OverCodeModel extends VDomModel {
         var scope = this;
 
         const scalerTime = scaleLog()
-        .domain([1, 46272942000])
-        .range([0, 1*60*1000])
-
+        // .domain([1, 46272942000])
+        .domain([1, 7208569070+5])
+        .range([0, 0.5*60*1000])
+        var MAX = -Infinity;
         this.activeUsers.forEach((name: string) => {
             this.events[name].forEach((event: DLEvent, index: number) => {
-                if (scalerTime(event.timeOffset+1) < 1*60*1000){
-                    setTimeout(() => {
-                        scope.currentCode[name] = event.code;
-                        if (event.type==='start'){
-                            scope.submissions[name] = [];
-                            scope.selectedCommit[name] = null;
-                            scope.selectedOutput[name] = null;
-                            scope.selectedPassTest[name] = null;
-                            scope.userClusterID[name] = null;
+                setTimeout(() => {
+                    scope.currentCode[name] = event.code;
+                    if (event.type==='start'){
+                        scope.submissions[name] = [];
+                        scope.selectedCommit[name] = null;
+                        scope.selectedOutput[name] = null;
+                        scope.selectedPassTest[name] = null;
+                        scope.userClusterID[name] = null;
+                        scope.currentIncorrectSolutions[name] = null;
+                    }
+                    if (event.type==='run'){
+    
+
+                        scope.submissions[name].push(event);
+                        if (scope.userClusterID[name]){
+                            scope.clusterCount[scope.userClusterID[name]!]-=1;
+                        }
+                        if (event.clusterID && event.passTest){
+                            scope.userClusterID[name] = event.clusterID;
+                            scope.clusterCount[scope.userClusterID[name]!]+=1;
                             scope.currentIncorrectSolutions[name] = null;
-                        }
-                        if (event.type==='run'){
-                            scope.submissions[name].push(event);
-                            if (scope.userClusterID[name]){
-                                scope.clusterCount[scope.userClusterID[name]!]-=1;
-                                // scope.clusterNames[scope.userClusterID[name]!].
-                            }
-                            if (event.clusterID){
-                                scope.userClusterID[name] = event.clusterID;
-                                scope.clusterCount[scope.userClusterID[name]!]+=1;
-                                scope.currentIncorrectSolutions[name] = null;
-                            }else{
-                                scope.userClusterID[name] = null;
-                                scope.currentIncorrectSolutions[name] = event;
-                            }
-                        }
-                        if (event.type==='edit'){
-                            if (scope.userClusterID[name]){
-                                scope.clusterCount[scope.userClusterID[name]!]-=1;
-                            }
+                        }else{
                             scope.userClusterID[name] = null;
+                            scope.currentIncorrectSolutions[name] = event;
                         }
-                        scope.stateChanged.emit();
-                    }, scalerTime(event.timeOffset+1));
-                }
+
+                        if (name.startsWith('user_150')){
+                            console.log(event);
+                            console.log(this.currentIncorrectSolutions[name]);
+                        }
+
+                    }
+                    if (event.type==='edit'){
+                        if (scope.userClusterID[name]){
+                            scope.clusterCount[scope.userClusterID[name]!]-=1;
+                        }
+                        scope.userClusterID[name] = null;
+                    }
+                    scope.stateChanged.emit();
+                }, scalerTime(event.timeOffset+1));
+
             })
         })
+        console.log(MAX);
         return;
     }
 
