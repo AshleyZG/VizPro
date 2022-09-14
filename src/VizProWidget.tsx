@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { VizProViz } from './VizProViz';
 import { DLEvent, Position, MyNode, OverCodeCluster } from './VizProTypes';
+// import { active } from 'd3';
 var overcode_result: any;
 
 fetch('https://raw.githubusercontent.com/AshleyZG/VizProData/master/ac6_8_9_last_solution.json')
@@ -206,7 +207,8 @@ class VizProModel extends VDomModel {
     onBrushChange(){
         const scope = this;
         function fn(events: DLEvent[]){
-            scope.selectedEvents = events.filter((value: DLEvent) => {return value.type==='run'});
+            // scope.selectedEvents = events.filter((value: DLEvent) => {return value.type==='run'});
+            scope.selectedEvents = events;
             scope.feedback = "";
             scope.groupError = true;
             scope.stateChanged.emit();
@@ -274,6 +276,12 @@ class VizProModel extends VDomModel {
         var scope = this;
         function fn(event:  React.FormEvent<HTMLFormElement>){
             // debugger;
+            if (!scope.searchUser){
+                event.preventDefault();
+                return;}
+            if (!(scope.activeUsers.includes(scope.searchUser!+'@umich.edu'))){
+                event.preventDefault();
+                return;}
             if (scope.searchUser?.startsWith('user_')){
                 scope.focusOnUser(scope, scope.searchUser!+'@umich.edu');
                 scope.searchUser = "";
@@ -330,8 +338,12 @@ class VizProWidget extends VDomRenderer<VizProModel> {
             var errorTypes: string[] = [];
             var groups: {[error: string]: DLEvent[]} = {};
             var correctEvents: DLEvent[] = [];
+            var activeEvents: DLEvent[] = [];
             this.model.selectedEvents.forEach((event: DLEvent, index: number) => {
-                if (event.passTest){
+                if (event.type!=='run'){
+                    activeEvents.push(event);
+                }
+                else if (event.passTest){
                     correctEvents.push(event);
                 }else{
                     var error = event.output!.split(':')[0];
@@ -376,6 +388,20 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                         <SyntaxHighlighter 
                         language='python'
                         >{event.code}</SyntaxHighlighter> 
+                    </div>
+                })}
+                {activeEvents.length>0? <span className='error-type'>Typing on it</span>: null}
+                {activeEvents.map((event: DLEvent) => {
+                    return <div>
+                        <SyntaxHighlighter 
+                        language='python'
+                        customStyle={{
+                            backgroundColor: event.passTest? "gainsboro": "rgb(255, 214, 139)",
+                        }}
+
+                        >
+                            {event.code}
+                        </SyntaxHighlighter>
                     </div>
                 })}
             </div>

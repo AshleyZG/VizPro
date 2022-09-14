@@ -101,7 +101,7 @@ class OverCodeModel extends VDomModel {
         const scalerTime = scaleLog()
         // .domain([1, 46272942000])
         .domain([1, 7208569070+5])
-        .range([0, 0.5*60*1000])
+        .range([0, 15*60*1000])
         var MAX = -Infinity;
         this.activeUsers.forEach((name: string) => {
             this.events[name].forEach((event: DLEvent, index: number) => {

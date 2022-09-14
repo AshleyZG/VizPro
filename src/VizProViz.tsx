@@ -80,7 +80,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
         const scalerTime = scaleLog()
             .domain([1, 7208569070+5])
-            .range([0, 0.5*60*1000])
+            .range([0, 15*60*1000])
 
         activeUsers.forEach((name: string) => {
             events[name].forEach((event: DLEvent, index: number)=>{
@@ -408,6 +408,20 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
 
 
+        // add y axis
+        // const yaxis = d3.path();
+        // yaxis.moveTo(WIDTH*0.8+5, 0);
+        // yaxis.lineTo(WIDTH*0.8, HEIGHT);
+
+        // graph.append('g')
+        //     .attr('class', 'yaxis')
+        //     .append('path')
+        //     .attr('stroke', 'black')
+        //     .attr('stroke-width', 1)
+        //     .attr('d', yaxis.toString());
+            
+        // var tagScaler = scaleLinear().domain()
+        var tagOffsets: {[key: number]: number} = {5: 20, 2: 20, 16:40, 6: 60, 26: 80, 28: 20, 13: 20, 27:40, 21:20, 9:20};
         // draw correct solution tags
         var tags = graph.selectAll('.solution-tag')
             .data(clusterIDs)
@@ -415,16 +429,18 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .append('g')
             .attr('class', 'solution-tag')
             .attr('id', function(d, i){return d});
+        tags.append('text')
+            .text(function(d, i){return d})
+            .attr('x', function(d, i){ return WIDTH*0.8+5+(d in tagOffsets? tagOffsets[d]: 0)})
+            .attr('y', function(d, i){return scope.scalerY(scope.props.position[d].y)+8})
         tags.append('rect')
             .attr('width', 20)
-            .attr('height', 5)
-            .attr('x', function(d, i){ return WIDTH*0.8+5+Math.random()*50})
-            // .attr('y', function(d, i){return HEIGHT/clusterIDs.length*(i+1)})
-            .attr('y', function(d, i){return Math.random()*5+scope.scalerY(scope.props.position[d].y)})
+            .attr('height', 10)
+            .attr('x', function(d, i){ return WIDTH*0.8+5+(d in tagOffsets? tagOffsets[d]: 0)})
+            .attr('y', function(d, i){return scope.scalerY(scope.props.position[d].y)})
             .attr('rx', 2)
             .attr('fill', 'gray')
             .attr('opacity', '50%')
-            // .attr('stroke', 'black')
             .on('mouseover', function(event, d){
                 scope.props.circleMouseOverFn(d, scope.clusterProgress[d].correct.map((value: string)=>{return scope.userCode[value]}), scope.clusterProgress[d].incorrect.map((value: string)=>{return scope.userCode[value]}), scope.clusterProgress[d].correct, scope.clusterProgress[d].incorrect);
             })
@@ -467,11 +483,30 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
                 scope.switchHistoryVisible(event);
             })
 
+        var button2 = graph.append('g')
+            .attr('class', 'button')
+            .attr('id', 'button')
+
+        button2.append('rect')
+            .attr('fill', 'gainsboro')
+            .attr('width', 75)
+            .attr('height', 25)
+            .attr('rx', 10)
+            .attr('x', 0)
+            .attr('y', 30)
+        button2.append('text')
+            .attr('x', 10)
+            .attr('y', 50)
+            .text('Reset Map')
+            .on('click', function(event, d){
+                scope.resetGraph(event);
+            })
 
 
-        d3.select('body').on('click', function(event, d){
-            scope.resetGraph(event);
-        })
+
+        // d3.select('body').on('click', function(event, d){
+        //     scope.resetGraph(event);
+        // })
 
 
     }
