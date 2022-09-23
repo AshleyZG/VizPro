@@ -461,61 +461,7 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                                 circleMouseOverFn={this.model.circleMouseOver()}
                                 circleMouseOutFn={this.model.circleMouseOut()}
                                 onBrushChangeFn={this.model.onBrushChange()}
-                            
-                            
                             ></VizProViz>
-                        </div>
-                        <div className='scatter-middle-view'>
-                            {/* class size */}
-                            {<p><span>The whole class has {this.model.activeUsers.length} students.</span></p>}
-                            {/* solution type */}
-                            <p><span>Solution {this.model.selectedClusterID}</span></p>
-                            {/* number of correct/incorrect solutions */}
-                            {this.model.selectedClusterID? <p><span style={{color: 'green'}}>{this.model.selectedCorrectSolutions?.length}</span> students have correct solutions, <span style={{color: 'red'}}>{this.model.selectedIncorrectSolutions?.length}</span> students have incorrect solutions.</p>: null}
-                            {/* see all students' name */}
-                            {this.model.selectedClusterID? <div>
-                                {this.model.selectedCorrectNames?.map((name: string) => {
-                                    return <div className='userbox correct' id={name} onClick={this.model.userOnClick()}>
-                                        <span>{name.split('@')[0]}</span>
-                                    </div>
-                                })}
-                                {this.model.selectedIncorrectNames?.map((name: string) => {
-                                    return <div className='userbox incorrect' id={name} onClick={this.model.userOnClick()}>
-                                        <span>{name.split('@')[0]}</span>
-                                    </div>
-                                })}
-                            </div> : null}
-                            {this.model.selectedClusterID? <SyntaxHighlighter language='python' >{this.model.overCodeClusters[this.model.selectedClusterID].members[0]}</SyntaxHighlighter> : null}
-                            {this.model.selectedIncorrectSolutions? <div>
-                                {this.model.selectedIncorrectSolutions.map((code:string) => {
-                                    return <SyntaxHighlighter 
-                                    language='python'
-                                    customStyle={{
-                                        backgroundColor: "rgb(255, 214, 139)"
-                                    }}
-                                      >{code}</SyntaxHighlighter>
-                                })}
-                            </div>:null}
-                        </div>
-                        <div className='scatter-right-view'>
-                            {/* search user name */}
-                            <form onSubmit={this.model.searchUserSubmit()}>
-                                <label>
-                                    Search User:
-                                    <input type="text" value={this.model.searchUser} onChange={this.model.searchUserChange()}/>
-                                </label>
-                                <input type="submit" value="Submit"/>
-                            </form>
-                            {/* feedback */}
-                            <form onSubmit={this.model.feedbackSubmit()}>
-                                <label>
-                                    Feedback:
-                                    <input type="text" value={this.model.feedback} onChange={this.model.feedbackChange()}/>
-                                </label>
-                                <input type="submit" value="Submit"/>
-                            </form>
-                            {/* solution list */}
-                            {this.renderEventList(this.model.groupError)}
                         </div>
                     </div>
                 }}
