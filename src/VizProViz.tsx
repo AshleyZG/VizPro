@@ -80,7 +80,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
 
         const scalerTime = scaleLog()
             .domain([1, 7208569070+5])
-            .range([0, 15*60*1000])
+            .range([0, 1*60*1000])
 
         activeUsers.forEach((name: string) => {
             events[name].forEach((event: DLEvent, index: number)=>{
