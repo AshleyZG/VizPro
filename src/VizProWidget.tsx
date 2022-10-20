@@ -34,7 +34,7 @@ class VizProModel extends VDomModel {
     clusterIDs: number[] = [];
     overCodeClusters: {[cluster_id: number]: OverCodeCluster} = {};
     position: {[id: number]: Position} = {};
-
+    currentCode: {[name: string]: string} = {};
     selectedClusterID: number | undefined;
     selectedCorrectSolutions: string[] | undefined;
     selectedIncorrectSolutions: string[] | undefined;
@@ -173,9 +173,10 @@ class VizProModel extends VDomModel {
 
             })
             this.activeUsers.push(name);
+            this.currentCode[name] = '';
         }
         this.nSample = n_samples;
-
+        this.activeUsers = ['user_120@umich.edu', 'user_127@umich.edu', 'user_20@umich.edu'];
         // sort clusters by edit dist
         this.sortClusterIDs();
         this.stateChanged.emit();
@@ -322,6 +323,16 @@ class VizProModel extends VDomModel {
         return fn;
     }
 
+    updateCode(){
+        var scope = this;
+        function fn(name: string, event: DLEvent){
+            var code = (event.code.split('\n').filter((l: string) => {return (!l.startsWith('assert') && !l.startsWith('del'))})).join('\n');
+            scope.currentCode[name] = code;
+            scope.stateChanged.emit();
+        }
+        return fn;
+    }
+
 }
 
 
@@ -439,6 +450,18 @@ class VizProWidget extends VDomRenderer<VizProModel> {
         return <div> 
             <UseSignal signal={this.model.stateChanged} >
                 {(): any => {
+
+                    var colorMap: {[key: string]: string} = {'user_120@umich.edu': '#D2691E',
+                    'user_127@umich.edu': '#8A2BE2',
+                    'user_20@umich.edu': '#1E90FF'}
+                    var nameMap: {[key: string]: string} = {'user_120@umich.edu': 'A',
+                    'user_127@umich.edu': 'B',
+                    'user_20@umich.edu': 'C'}
+                    // const style={
+                    //     border-style: 'solit',
+                    //     border
+                    // }
+
                     return <div>
                         <div className='scatter-left-view'>
                             {/* scatter widget */}
@@ -461,7 +484,20 @@ class VizProWidget extends VDomRenderer<VizProModel> {
                                 circleMouseOverFn={this.model.circleMouseOver()}
                                 circleMouseOutFn={this.model.circleMouseOut()}
                                 onBrushChangeFn={this.model.onBrushChange()}
+                                updateCode={this.model.updateCode()}
                             ></VizProViz>
+                        </div>
+                        <div className='scatter-right-view'>
+                            {this.model.activeUsers.map((name: string) => {
+                                return <div style={{border: `2px solid ${colorMap[name]}`, margin:'5px'}}>
+                                    <span>{nameMap[name]}</span>
+                                    <SyntaxHighlighter language='python'
+                                    >{this.model.currentCode[name]}
+
+                                    </SyntaxHighlighter>
+                                </div>
+                                
+                            })}
                         </div>
                     </div>
                 }}

@@ -26,6 +26,7 @@ interface VizProVizProps {
     circleMouseOverFn: (clusterID: number, correctSolutions: string[], incorrectSolutions: string[], correctNames: string[], incorrectNames: string[])=>void;
     circleMouseOutFn: ()=>void;
     onBrushChangeFn: (events: DLEvent[])=>void;
+    updateCode: (name: string, event: DLEvent)=>void;
 };
 interface VizProVizState {
 };
@@ -81,10 +82,11 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
         const scalerTime = scaleLog()
             .domain([1, 7208569070+5])
             .range([0, 1*60*1000])
-
+        console.log(scalerTime);
         activeUsers.forEach((name: string) => {
             events[name].forEach((event: DLEvent, index: number)=>{
                 setTimeout(()=>{
+                    scope.props.updateCode(name, event);
                     var [x, y] = scope.calculatePos(name, event);
                     scope.userCode[name] = event.code;
                     scope.userEvent[name] = event;
@@ -92,7 +94,7 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
                     scope.paths[name].lineTo(x, y);
                     
                     scope.updateGraph(name, x, y, event.passTest, event);
-                }, scalerTime(event.timeOffset+1));    
+                }, 500*index);    
 
             })
         })
@@ -392,6 +394,10 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .attr('fill', function(d, i){return 'orange'})
 
         // add a path for each dot
+        var colorMap: {[key: string]: string} = {'user_120@umich.edu': '#D2691E',
+                        'user_127@umich.edu': '#8A2BE2',
+                        'user_20@umich.edu': '#1E90FF'}
+
         var paths = graph.selectAll('.trajectory')
             .data(activeUsers)
             .enter()
@@ -400,10 +406,11 @@ class VizProViz extends React.Component<VizProVizProps, VizProVizState> {
             .attr('id', function(d, i){return d});
 
         paths.append('path')
+            .attr('id', function(d, i){return d;})
             .attr('d', function(d, i){return scope.paths[d].toString()})
-            .style('stroke', 'gray')
-            .style('stroke-width', '0.1')
-            .style('stroke-opacity', '0.1')
+            .style('stroke', function(d, i){return colorMap[d];})
+            .style('stroke-width', '1')
+            // .style('stroke-opacity', '0.1')
             .style('fill', 'none');
 
 
